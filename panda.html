@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script>
+        // TODO: Replace with your own Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBW54pJD1ACTG8TQlaadp6xb84G28mqfq0",
+            authDomain: "esp32-pscs.firebaseapp.com",
+            databaseURL: "https://esp32-pscs-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "esp32-pscs",
+            storageBucket: "esp32-pscs.firebasestorage.app",
+            messagingSenderId: "985824901544",
+            appId: "1:985824901544:web:4d2e922f0557724130059d"
+            };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solar Charging Dashboard</title>
@@ -562,10 +582,6 @@
                     <h3>Power</h3>
                     <p id="power">0.0 W</p>
                 </div>
-                <div class="detail-card">
-                    <h3>Temperature</h3>
-                    <p>26°C</p>
-                </div>
             </div>
         </section>
         
@@ -577,10 +593,6 @@
             <div class="status-item">
                 <span class="status-label">Solar Efficiency</span>
                 <span class="status-value efficiency-low" id="solar-efficiency">0.0%</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">Time to Full</span>
-                <span class="status-value">--:--</span>
             </div>
         </section>
         
@@ -779,19 +791,15 @@
                 </div>
                 <div class="spec-item">
                     <span class="spec-label">Solar Panels:</span>
-                    <span class="spec-value">4 × 100W Monocrystalline</span>
+                    <span class="spec-value">50W Monocrystalline</span>
                 </div>
                 <div class="spec-item">
-                    <span class="spec-label">Battery Bank:</span>
-                    <span class="spec-value">24V 200Ah Lithium-ion</span>
+                    <span class="spec-label">Battery Type:</span>
+                    <span class="spec-value">12V 9Ah Lead-Acid</span>
                 </div>
                 <div class="spec-item">
                     <span class="spec-label">Charge Controller:</span>
                     <span class="spec-value">MPPT 40A</span>
-                </div>
-                <div class="spec-item">
-                    <span class="spec-label">Inverter:</span>
-                    <span class="spec-value">2000W Pure Sine Wave</span>
                 </div>
             </div>
             
@@ -863,15 +871,29 @@
             }, 100);
             
             // Update other data (in a real app, this would come from an API)
-            setTimeout(() => {
-                document.getElementById('voltage').textContent = '12.4 V';
-                document.getElementById('current').textContent = '2.5 A';
-                document.getElementById('power').textContent = '31.0 W';
-                document.getElementById('charging-status').textContent = 'Charging';
-                document.getElementById('charging-status').className = 'status-value charging';
-                document.getElementById('solar-efficiency').textContent = '85.5%';
-                document.getElementById('solar-efficiency').className = 'status-value';
-            }, 1500);
+            //setTimeout(() => {
+                database.ref("data1").limitToLast(1).on("value", (snapshot) => {
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
+
+                        const percent = data.batteryPercentage || 0;
+                        updateBattery(percent);
+
+                        document.getElementById("voltage").textContent = `${data.voltage} V`;
+                        document.getElementById("current").textContent = `${data.current} A`;
+                        document.getElementById("power").textContent = `${data.power} W`;
+
+                        // If you have efficiency and isCharging in your data, include them
+                        document.getElementById("solar-efficiency").textContent = `${data.efficiency || 0}%`;
+
+                        const chargingStatus = document.getElementById("charging-status");
+                        const isCharging = data.isCharging || false;
+                        chargingStatus.textContent = isCharging ? "Charging" : "Not Charging";
+                        chargingStatus.className = `status-value ${isCharging ? "charging" : "not-charging"}`;
+                    });
+                });
+
+            //}, 1500);
             
             function updateBattery(percent) {
                 batteryLevel.style.width = percent + '%';
