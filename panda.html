@@ -413,57 +413,17 @@
         }
 
         /* Graph Styles */
-        .graph-container {
+        .graph-wrapper {
             width: 100%;
-            height: 250px;
-            background: #f9f9f9;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
+            overflow-x: auto;
+            padding: 10px 0;
         }
 
-        .graph {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            right: 20px;
-            height: 200px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-around;
-        }
-
-        .graph-bar {
-            width: 30px;
-            background: var(--primary);
-            border-radius: 5px 5px 0 0;
-            position: relative;
-            transition: height 0.5s ease;
-        }
-
-        .graph-bar::after {
-            content: attr(data-value);
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            color: var(--dark);
-        }
-
-        .graph-labels {
-            display: flex;
-            justify-content: space-around;
-            padding: 0 30px;
-            margin-top: 5px;
-        }
-
-        .graph-label {
-            font-size: 12px;
-            color: #607D8B;
-            width: 30px;
-            text-align: center;
+        #energyChart {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 250px;
+            min-width: 500px; /* scrollable if too much data */
         }
 
         /* Table Styles */
@@ -697,7 +657,7 @@
         
         <div class="popup-content">
             <h3 style="margin-bottom: 15px; color: var(--primary);">Energy Generated Today</h3>
-            <div class="graph-container">
+            <div class="graph-wrapper">
                 <canvas id="energyChart" height="100"></canvas>
                 </div>
             </div>
