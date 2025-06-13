@@ -4,6 +4,7 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // TODO: Replace with your own Firebase config
         const firebaseConfig = {
@@ -550,7 +551,7 @@
 <body>
     <!-- Logo Splash Screen -->
     <div class="logo-splash">
-        <img src="image-generation_oMCapdmWBbZ1DIg8MDXz5peCkTf2_1749673400478_result.jpeg" alt="Panda Holding Battery">
+        <img src="c:\Users\ADMIN\Downloads\image-generation_oMCapdmWBbZ1DIg8MDXz5peCkTf2_1749673400478_result.jpeg" alt="Panda Holding Battery">
         <h2>Solar Charging System</h2>
     </div>
 
@@ -624,62 +625,46 @@
         </div>
         
         <div class="popup-content">
-            <h3 style="margin-bottom: 15px; color: var(--primary);">Connected Devices</h3>
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Device</th>
-                        <th>Power (W)</th>
-                        <th>Status</th>
-                        <th>Priority</th>
+                        <th>Metric</th>
+                        <th>Data</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Refrigerator</td>
-                        <td>120</td>
-                        <td style="color: var(--primary);">ON</td>
-                        <td>High</td>
+                        <td>Total Power Usage</td>
+                        <td id="load-power">-- W</td>
                     </tr>
                     <tr>
-                        <td>Lighting</td>
-                        <td>40</td>
-                        <td style="color: var(--primary);">ON</td>
-                        <td>Medium</td>
+                        <td>Current Draw</td>
+                        <td id="load-current">-- A</td>
                     </tr>
                     <tr>
-                        <td>Water Pump</td>
-                        <td>200</td>
-                        <td style="color: var(--danger);">OFF</td>
-                        <td>High</td>
+                        <td>Load Voltage</td>
+                        <td id="load-voltage">-- V</td>
                     </tr>
                     <tr>
-                        <td>Router</td>
-                        <td>15</td>
-                        <td style="color: var(--primary);">ON</td>
-                        <td>Critical</td>
+                        <td>Load Level</td>
+                        <td id="load-level">--</td>
                     </tr>
                     <tr>
-                        <td>TV</td>
-                        <td>80</td>
-                        <td style="color: var(--danger);">OFF</td>
-                        <td>Low</td>
+                        <td>Last Update</td>
+                        <td id="load-last-update">--</td>
                     </tr>
                 </tbody>
             </table>
             
             <div style="margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 12px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span>Total Load:</span>
-                    <strong>175 W</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span>Available Power:</span>
-                    <strong>310 W</strong>
-                </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span>Available Power:</span>
+                <strong id="available-power">-- W</strong>
+            </div>
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Battery Backup:</span>
-                    <strong>8h 24m</strong>
+                    <span>Estimated Battery Runtime:</span>
+                    <strong id="battery-backup">--</strong>
+
                 </div>
             </div>
         </div>
@@ -711,25 +696,9 @@
         </div>
         
         <div class="popup-content">
-            <h3 style="margin-bottom: 15px; color: var(--primary);">Energy Generation (Last 7 Days)</h3>
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Energy Generated Today</h3>
             <div class="graph-container">
-                <div class="graph">
-                    <div class="graph-bar" style="height: 30%;" data-value="2.1kWh"></div>
-                    <div class="graph-bar" style="height: 45%;" data-value="3.2kWh"></div>
-                    <div class="graph-bar" style="height: 60%;" data-value="4.3kWh"></div>
-                    <div class="graph-bar" style="height: 80%;" data-value="5.8kWh"></div>
-                    <div class="graph-bar" style="height: 65%;" data-value="4.7kWh"></div>
-                    <div class="graph-bar" style="height: 50%;" data-value="3.9kWh"></div>
-                    <div class="graph-bar" style="height: 40%;" data-value="2.8kWh"></div>
-                </div>
-                <div class="graph-labels">
-                    <span class="graph-label">Mon</span>
-                    <span class="graph-label">Tue</span>
-                    <span class="graph-label">Wed</span>
-                    <span class="graph-label">Thu</span>
-                    <span class="graph-label">Fri</span>
-                    <span class="graph-label">Sat</span>
-                    <span class="graph-label">Sun</span>
+                <canvas id="energyChart" height="100"></canvas>
                 </div>
             </div>
             
@@ -749,9 +718,8 @@
             <div style="height: 10px; background: #eee; border-radius: 5px;">
                 <div style="width: 92%; height: 100%; background: var(--secondary); border-radius: 5px;"></div>
             </div>
-        </div>
-        
-        <nav class="nav-bar" style="margin-top: auto;">
+
+            <nav class="nav-bar" style="margin-top: auto;">
             <div class="nav-item" data-popup="battery">
                 <i class="fas fa-battery-quarter"></i>
                 <span>Battery</span>
@@ -760,15 +728,16 @@
                 <i class="fas fa-plug"></i>
                 <span>Load</span>
             </div>
-            <div class="nav-item active" data-popup="stats">
+            <div class="nav-item" data-popup="stats">
                 <i class="fas fa-chart-line"></i>
                 <span>Stats</span>
             </div>
-            <div class="nav-item" data-popup="about">
+            <div class="nav-item active" data-popup="about">
                 <i class="fas fa-info-circle"></i>
                 <span>About</span>
             </div>
         </nav>
+        </div>
     </div>
 
     <div class="popup-overlay" id="about-popup">
@@ -802,7 +771,6 @@
                     <span class="spec-value">MPPT 40A</span>
                 </div>
             </div>
-            
             <div style="margin: 25px 0; padding: 15px; background: #f9f9f9; border-radius: 12px;">
                 <p style="margin-bottom: 10px; font-weight: 600;">System Performance</p>
                 <p style="font-size: 14px; color: #607D8B;">
@@ -812,8 +780,7 @@
                 </p>
             </div>
         </div>
-        
-        <nav class="nav-bar" style="margin-top: auto;">
+         <nav class="nav-bar" style="margin-top: auto;">
             <div class="nav-item" data-popup="battery">
                 <i class="fas fa-battery-quarter"></i>
                 <span>Battery</span>
@@ -843,6 +810,7 @@
                 }, 500);
             }, 2000);
 
+            const batteryCapacityWh = 108; // 12V x 9Ah = 108Wh
             const batteryLevel = document.getElementById('battery-level');
             const batteryPercentage = document.getElementById('battery-percentage');
             
@@ -870,6 +838,10 @@
                 updateBattery(percentage);
             }, 100);
             
+            // ✅ Declare global variables first
+            let batteryPower = null;
+            let loadPower = null;
+
             // Update other data (in a real app, this would come from an API)
             //setTimeout(() => {
                 database.ref("data1").limitToLast(1).on("value", (snapshot) => {
@@ -882,14 +854,35 @@
                         document.getElementById("voltage").textContent = `${data.voltage} V`;
                         document.getElementById("current").textContent = `${data.current} A`;
                         document.getElementById("power").textContent = `${data.power} W`;
-
-                        // If you have efficiency and isCharging in your data, include them
                         document.getElementById("solar-efficiency").textContent = `${data.efficiency || 0}%`;
 
                         const chargingStatus = document.getElementById("charging-status");
                         const isCharging = data.isCharging || false;
                         chargingStatus.textContent = isCharging ? "Charging" : "Not Charging";
                         chargingStatus.className = `status-value ${isCharging ? "charging" : "not-charging"}`;
+                        
+                        batteryPower = data.power;
+                        calculateAvailablePower();
+                    });
+                });
+
+                database.ref("data2").limitToLast(1).on("value", (snapshot) => {
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
+
+                        document.getElementById("load-power").textContent = `${data.power.toFixed(1)} W`;
+                        document.getElementById("load-current").textContent = `${data.current.toFixed(2)} A`;
+                        document.getElementById("load-voltage").textContent = `${data.voltage.toFixed(2)} V`;
+                        document.getElementById("load-level").textContent = data.loadLevel || "--";
+                        document.getElementById("load-last-update").textContent = data.lastUpdate || "--";
+                    
+                    const loadLevelEl = document.getElementById("load-level");
+                    if (data.loadLevel === "Low") loadLevelEl.style.color = "#FF9800"; // orange
+                    else if (data.loadLevel === "Normal") loadLevelEl.style.color = "#4CAF50"; // green
+                    else if (data.loadLevel === "High") loadLevelEl.style.color = "#F44336"; // red
+                    loadPower = data.power;
+                    calculateAvailablePower();
+                    calculateBatteryBackup();
                     });
                 });
 
@@ -909,6 +902,72 @@
                 }
             }
             
+            function calculateAvailablePower() {
+                if (batteryPower !== null && loadPower !== null) {
+                    const available = batteryPower - loadPower;
+                    document.getElementById("available-power").textContent = `${available.toFixed(1)} W`;
+                }
+            }
+
+            function calculateBatteryBackup() {
+                if (loadPower !== null && loadPower > 0) {
+                    const batteryCapacityWh = 108; // 12V × 9Ah = 108Wh
+                    const backupTime = batteryCapacityWh / loadPower;
+                    const hours = Math.floor(backupTime);
+                    const minutes = Math.round((backupTime - hours) * 60);
+                    document.getElementById("battery-backup").textContent = `${hours}h ${minutes}m`;
+                } else {
+                    document.getElementById("battery-backup").textContent = `∞ (No Load)`;
+                }
+            }
+
+            database.ref("data1").limitToLast(144).once("value", (snapshot) => {
+                const labels = [];
+                const energyData = [];
+
+                snapshot.forEach((child) => {
+                    const entry = child.val();
+                    const timestamp = child.key.replace(/_/g, " ");
+                    const energyWh = entry.power * 0.1667;
+                    labels.push(timestamp);
+                    energyData.push(parseFloat(energyWh.toFixed(2)));
+                });
+
+                // ✅ Call the chart after data is prepared
+                renderEnergyChart(labels, energyData);
+            });
+
+            // ✅ Chart function can be defined outside (optional)
+            function renderEnergyChart(labels, data) {
+                new Chart(document.getElementById("energyChart"), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: "Energy Generated (Wh)",
+                            data: data,
+                            borderColor: "#4CAF50",
+                            backgroundColor: "rgba(76, 175, 80, 0.1)",
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                title: { display: true, text: "Time" },
+                                ticks: { maxTicksLimit: 10, autoSkip: true }
+                            },
+                            y: {
+                                title: { display: true, text: "Energy (Wh)" }
+                            }
+                        }
+                    }
+                });
+            }
+
             // Popup functionality
             const navItems = document.querySelectorAll('.nav-item');
             const popups = document.querySelectorAll('.popup-overlay');
