@@ -420,11 +420,9 @@
         }
 
         #energyChart {
-            width: 100% !important;
-            height: auto !important;
-            min-height: 250px;
-            min-width: 500px; /* scrollable if too much data */
-        }
+            min-width: 600px; /* lets bars breathe on mobile */
+            min-height: 300px;
+            }
 
         /* Table Styles */
         .data-table {
@@ -900,33 +898,40 @@
             // ✅ Chart function can be defined outside (optional)
             function renderEnergyChart(labels, data) {
                 new Chart(document.getElementById("energyChart"), {
-                    type: 'line',
+                    type: 'bar', // ✅ Use bar instead of line
                     data: {
-                        labels: labels,
-                        datasets: [{
-                            label: "Energy Generated (Wh)",
-                            data: data,
-                            borderColor: "#4CAF50",
-                            backgroundColor: "rgba(76, 175, 80, 0.1)",
-                            fill: true,
-                            tension: 0.3,
-                            pointRadius: 0
-                        }]
+                    labels: labels,
+                    datasets: [{
+                        label: "Energy Generated (Wh)",
+                        data: data,
+                        backgroundColor: "#4CAF50", // ✅ Bar color
+                        borderRadius: 6 // Rounded top
+                    }]
                     },
                     options: {
-                        responsive: true,
-                        scales: {
-                            x: {
-                                title: { display: true, text: "Time" },
-                                ticks: { maxTicksLimit: 10, autoSkip: true }
-                            },
-                            y: {
-                                title: { display: true, text: "Energy (Wh)" }
-                            }
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                        title: { display: true, text: "Time" },
+                        ticks: {
+                            maxTicksLimit: 10,
+                            autoSkip: true
                         }
+                        },
+                        y: {
+                        title: { display: true, text: "Energy (Wh)" },
+                        beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }, // Bar chart usually doesn’t need legend
+                        tooltip: { enabled: true }
+                    }
                     }
                 });
-            }
+                }
+
 
             // Popup functionality
             const navItems = document.querySelectorAll('.nav-item');
