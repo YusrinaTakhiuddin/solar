@@ -22,6 +22,12 @@
         const database = firebase.database();
     </script>
 
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="SolarApp">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solar Charging Dashboard</title>
@@ -79,6 +85,7 @@
         }
         
         header {
+            margin-top: 20px;
             text-align: center;
             margin-bottom: 30px;
             position: relative;
@@ -552,10 +559,6 @@
                 <span class="status-label">Charging Status</span>
                 <span class="status-value not-charging" id="charging-status">Not Charging</span>
             </div>
-            <div class="status-item">
-                <span class="status-label">Solar Efficiency</span>
-                <span class="status-value efficiency-low" id="solar-efficiency">0.0%</span>
-            </div>
         </section>
         
         <nav class="nav-bar">
@@ -668,22 +671,28 @@
         </div>
 
             
-            <h3 style="margin: 25px 0 15px; color: var(--primary);">System Efficiency</h3>
+            <div class="status-card">
+            <h3 style="color: var(--primary); margin-bottom: 15px;">System Efficiency</h3>
+
+            <!-- Panel Efficiency -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span>Panel Efficiency:</span>
-                <strong>85%</strong>
+                <strong id="panel-efficiency-text">--%</strong>
             </div>
             <div style="height: 10px; background: #eee; border-radius: 5px; margin-bottom: 15px;">
-                <div style="width: 85%; height: 100%; background: var(--primary); border-radius: 5px;"></div>
+                <div id="panel-efficiency-bar" style="width: 0%; height: 100%; background: var(--primary); border-radius: 5px;"></div>
             </div>
-            
+
+            <!-- Battery Efficiency -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span>Battery Efficiency:</span>
-                <strong>92%</strong>
+                <strong id="battery-efficiency-text">--%</strong>
             </div>
             <div style="height: 10px; background: #eee; border-radius: 5px;">
-                <div style="width: 92%; height: 100%; background: var(--secondary); border-radius: 5px;"></div>
+                <div id="battery-efficiency-bar" style="width: 0%; height: 100%; background: var(--secondary); border-radius: 5px;"></div>
             </div>
+            </div>
+
 
             <nav class="nav-bar" style="margin-top: auto;">
             <div class="nav-item" data-popup="battery">
@@ -733,17 +742,28 @@
                     <span class="spec-value">12V 9Ah Lead-Acid</span>
                 </div>
                 <div class="spec-item">
+                    <span class="spec-label">Battery Capacity:</span>
+                    <span class="spec-value">108 Wh (12V x 9Ah)</span>
+                </div>
+                <div class="spec-item">
                     <span class="spec-label">Charge Controller:</span>
                     <span class="spec-value">MPPT 40A</span>
+                </div>
+                <div class="spec-item">
+                    <span class="spec-label">Update Frequency:</span>
+                    <span class="spec-value">Every 10 Minutes</span>
                 </div>
             </div>
             <div style="margin: 25px 0; padding: 15px; background: #f9f9f9; border-radius: 12px;">
                 <p style="margin-bottom: 10px; font-weight: 600;">System Performance</p>
                 <p style="font-size: 14px; color: #607D8B;">
-                    Total Energy Generated: 1,842 kWh<br>
-                    CO2 Emissions Saved: 1.2 tons<br>
-                    System Uptime: 99.8%
+                    <i class="fas fa-bolt" style="margin-right: 6px; color: #FF9800;"></i>
+                    Total Energy Generated: <span id="total-energy">--</span><br>
+                    <i class="fas fa-leaf" style="margin-right: 6px; color: #4CAF50;"></i>
+                    CO₂ Emissions Saved: <span id="co2-saved">--</span>
                 </p>
+
+
             </div>
         </div>
          <nav class="nav-bar" style="margin-top: auto;">
@@ -821,7 +841,23 @@
                         document.getElementById("voltage").textContent = `${data.voltage} V`;
                         document.getElementById("current").textContent = `${data.current} A`;
                         document.getElementById("power").textContent = `${data.power} W`;
-                        document.getElementById("solar-efficiency").textContent = `${data.efficiency || 0}%`;
+
+                        // ✅ Update panel efficiency text
+                        const panelEff = Math.min(data.efficiency || 0, 100);
+                        document.getElementById("panel-efficiency-text").textContent = `${panelEff.toFixed(1)}%`;
+
+                        // ✅ Update panel efficiency bar
+                        const panelBar = document.getElementById("panel-efficiency-bar");
+                        panelBar.style.width = `${panelEff}%`;
+
+                        // Optional: dynamic bar color
+                        if (panelEff < 60) {
+                            panelBar.style.background = "#F44336"; // red
+                        } else if (panelEff < 85) {
+                            panelBar.style.background = "#FF9800"; // orange
+                        } else {
+                            panelBar.style.background = "#4CAF50"; // green
+                        }
 
                         const chargingStatus = document.getElementById("charging-status");
                         const isCharging = data.isCharging || false;
@@ -850,6 +886,7 @@
                     loadPower = data.power;
                     calculateAvailablePower();
                     calculateBatteryBackup();
+                    updateBatteryEfficiency();
                     });
                 });
 
@@ -887,6 +924,53 @@
                     document.getElementById("battery-backup").textContent = `∞ (No Load)`;
                 }
             }
+
+            function updateBatteryEfficiency() {
+                const textEl = document.getElementById("battery-efficiency-text");
+                const barEl = document.getElementById("battery-efficiency-bar");
+
+                if (batteryPower !== null && loadPower !== null && batteryPower > 0) {
+                    const efficiency = (loadPower / batteryPower) * 100;
+                    const percent = Math.min(efficiency, 100); // cap at 100%
+
+                    // Update text
+                    textEl.textContent = `${percent.toFixed(1)}%`;
+
+                    // Update bar width
+                    barEl.style.width = `${percent}%`;
+
+                    // Optional: Change color based on range
+                    if (percent < 60) {
+                        barEl.style.background = "#F44336"; // red
+                    } else if (percent < 85) {
+                        barEl.style.background = "#FF9800"; // orange
+                    } else {
+                        barEl.style.background = "#4CAF50"; // green
+                    }
+
+                } else {
+                    textEl.textContent = `--%`;
+                    barEl.style.width = `0%`;
+                    barEl.style.background = "#ccc";
+                }
+            }
+
+            function loadSystemPerformance() {
+                let totalEnergy = 0;
+                database.ref("data1").once("value", (snapshot) => {
+                    snapshot.forEach(child => {
+                    const data = child.val();
+                    if (data.energy) totalEnergy += data.energy;
+                    });
+
+                    const kWh = (totalEnergy / 1000).toFixed(2);
+                    document.getElementById("total-energy").textContent = `${kWh} kWh`;
+
+                    const co2Saved = (kWh * 0.7).toFixed(2); // 0.7 kg CO2 per kWh (Malaysia average)
+                    document.getElementById("co2-saved").textContent = `${co2Saved} kg`;
+                });
+            }
+
 
             database.ref("data1").limitToLast(144).once("value", (snapshot) => {
                 const labels = [];
@@ -974,7 +1058,11 @@
                     if(popupId !== 'battery') {
                         document.getElementById(`${popupId}-popup`).classList.add('active');
                         document.body.style.overflow = 'hidden';
-                    } else {
+
+                        if (popupId === 'about') {
+                            loadSystemPerformance(); 
+                        }
+                        } else {
                         document.body.style.overflow = 'auto';
                     }
                 });
