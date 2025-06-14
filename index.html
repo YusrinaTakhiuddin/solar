@@ -389,7 +389,7 @@
         .popup-content {
             flex: 1;
             overflow-y: auto;
-            margin-bottom: 15px;
+            padding-bottom: 100px;
         }
 
         /* Logo splash screen */
@@ -525,7 +525,7 @@
 <body>
     <!-- Logo Splash Screen -->
     <div class="logo-splash">
-        <img src="image-generation_oMCapdmWBbZ1DIg8MDXz5peCkTf2_1749673400478_result.jpeg" alt="Panda Holding Battery">
+        <img src="c:\Users\ADMIN\Downloads\image-generation_oMCapdmWBbZ1DIg8MDXz5peCkTf2_1749673400478_result.jpeg" alt="Panda Holding Battery">
         <h2>Solar Charging System</h2>
     </div>
 
@@ -660,11 +660,11 @@
     </div>
 
     <div class="popup-overlay" id="stats-popup">
-        <div class="popup-header">
-            <h2 class="popup-title">System Statistics</h2>
-            <button class="popup-close">&times;</button>
-        </div>
-        
+    <div class="popup-header">
+        <h2 class="popup-title">System Statistics</h2>
+        <button class="popup-close">&times;</button>
+    </div>
+
     <div class="popup-content">
         <!-- Energy chart section -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -672,56 +672,54 @@
             <span id="today-date" style="font-weight: 500; color: #607D8B;"></span>
         </div>
 
-        <div class="graph-wrapper" style="margin-bottom: 5px;">
+        <div class="graph-wrapper" style="margin-bottom: 20px;">
             <canvas id="energyChart" height="100"></canvas>
         </div>
 
-        <!-- ✅ Move this inside -->
+        <!-- Moved System Efficiency INSIDE popup-content -->
         <div class="status-card">
             <h3 style="color: var(--primary); margin-bottom: 15px;">System Efficiency</h3>
 
             <!-- Panel Efficiency -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <span>Panel Efficiency:</span>
-            <strong id="panel-efficiency-text">--%</strong>
+                <span>Panel Efficiency:</span>
+                <strong id="panel-efficiency-text">--%</strong>
             </div>
             <div style="height: 10px; background: #eee; border-radius: 5px; margin-bottom: 15px;">
-            <div id="panel-efficiency-bar" style="width: 0%; height: 100%; background: var(--primary); border-radius: 5px;"></div>
+                <div id="panel-efficiency-bar" style="width: 0%; height: 100%; background: var(--primary); border-radius: 5px;"></div>
             </div>
 
             <!-- Battery Efficiency -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <span>Battery Efficiency:</span>
-            <strong id="battery-efficiency-text">--%</strong>
+                <span>Battery Efficiency:</span>
+                <strong id="battery-efficiency-text">--%</strong>
             </div>
             <div style="height: 10px; background: #eee; border-radius: 5px;">
-            <div id="battery-efficiency-bar" style="width: 0%; height: 100%; background: var(--secondary); border-radius: 5px;"></div>
+                <div id="battery-efficiency-bar" style="width: 0%; height: 100%; background: var(--secondary); border-radius: 5px;"></div>
             </div>
-        </div>
-        </div>
-
-
-
-            <nav class="nav-bar" style="margin-top: auto;">
-            <div class="nav-item" data-popup="battery">
-                <i class="fas fa-battery-quarter"></i>
-                <span>Battery</span>
-            </div>
-            <div class="nav-item" data-popup="load">
-                <i class="fas fa-plug"></i>
-                <span>Load</span>
-            </div>
-            <div class="nav-item" data-popup="stats">
-                <i class="fas fa-chart-line"></i>
-                <span>Stats</span>
-            </div>
-            <div class="nav-item active" data-popup="about">
-                <i class="fas fa-info-circle"></i>
-                <span>About</span>
-            </div>
-        </nav>
         </div>
     </div>
+
+    <nav class="nav-bar" style="margin-top: auto;">
+        <div class="nav-item" data-popup="battery">
+            <i class="fas fa-battery-quarter"></i>
+            <span>Battery</span>
+        </div>
+        <div class="nav-item" data-popup="load">
+            <i class="fas fa-plug"></i>
+            <span>Load</span>
+        </div>
+        <div class="nav-item active" data-popup="stats">
+            <i class="fas fa-chart-line"></i>
+            <span>Stats</span>
+        </div>
+        <div class="nav-item" data-popup="about">
+            <i class="fas fa-info-circle"></i>
+            <span>About</span>
+        </div>
+    </nav>
+</div>
+
 
     <div class="popup-overlay" id="about-popup">
         <div class="popup-header">
