@@ -415,14 +415,17 @@
         /* Graph Styles */
         .graph-wrapper {
             width: 100%;
-            overflow-x: auto;
+            overflow-x: auto;       /* allow horizontal scroll if needed */
             padding: 10px 0;
         }
 
-        #energyChart {
-            min-width: 600px; /* lets bars breathe on mobile */
+            #energyChart {
+            width: 100% !important;
+            height: auto !important;
             min-height: 300px;
-            }
+            min-width: 600px;       /* allows enough space for bars */
+        }
+
 
         /* Table Styles */
         .data-table {
@@ -653,12 +656,17 @@
             <button class="popup-close">&times;</button>
         </div>
         
-        <div class="popup-content">
-            <h3 style="margin-bottom: 15px; color: var(--primary);">Energy Generated Today</h3>
-            <div class="graph-wrapper">
-                <canvas id="energyChart" height="100"></canvas>
-                </div>
-            </div>
+    <div class="popup-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="color: var(--primary); margin: 0;">Energy Generated Today</h3>
+            <span id="today-date" style="font-weight: 500; color: #607D8B;"></span>
+        </div>
+
+        <div class="graph-wrapper">
+            <canvas id="energyChart" height="100"></canvas>
+        </div>
+        </div>
+
             
             <h3 style="margin: 25px 0 15px; color: var(--primary);">System Efficiency</h3>
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
@@ -772,6 +780,7 @@
             const batteryLevel = document.getElementById('battery-level');
             const batteryPercentage = document.getElementById('battery-percentage');
             
+
             // Set initial battery state
             updateBattery(0);
             
@@ -885,9 +894,11 @@
 
                 snapshot.forEach((child) => {
                     const entry = child.val();
-                    const timestamp = child.key.replace(/_/g, " ");
                     const energyWh = entry.power * 0.1667;
-                    labels.push(timestamp);
+                    const timestamp = child.key; // e.g. "2025-06-13_14-10-00"
+                    const timeLabel = timestamp.split("_")[1].replace(/-/g, ":"); // → "14:10:00"
+                    labels.push(timeLabel.slice(0, 5)); // → "14:10"
+
                     energyData.push(parseFloat(energyWh.toFixed(2)));
                 });
 
@@ -913,17 +924,20 @@
                     maintainAspectRatio: false,
                     scales: {
                         x: {
-                        title: { display: true, text: "Time" },
-                        ticks: {
-                            maxTicksLimit: 10,
+                            title: { display: true, text: "Time" },
+                            ticks: {
+                            maxRotation: 45,
+                            minRotation: 30,
+                            maxTicksLimit: 6,
                             autoSkip: true
-                        }
+                            }
                         },
                         y: {
-                        title: { display: true, text: "Energy (Wh)" },
-                        beginAtZero: true
+                            title: { display: true, text: "Energy (Wh)" },
+                            beginAtZero: true
                         }
                     },
+
                     plugins: {
                         legend: { display: false }, // Bar chart usually doesn’t need legend
                         tooltip: { enabled: true }
@@ -931,7 +945,12 @@
                     }
                 });
                 }
-
+            // Set today's date in header
+            const todayDateEl = document.getElementById("today-date");
+            const today = new Date();
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            todayDateEl.textContent = today.toLocaleDateString('en-GB', options);
+            // Example: "13 June 2025"
 
             // Popup functionality
             const navItems = document.querySelectorAll('.nav-item');
