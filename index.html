@@ -23,7 +23,7 @@
     </script>
 
     <link rel="manifest" href="manifest.json">
-    
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -238,7 +238,8 @@
             left: 0;
             right: 0;
             z-index: 1000;
-         }
+        }
+
         
         .nav-item {
             display: flex;
@@ -524,7 +525,7 @@
 <body>
     <!-- Logo Splash Screen -->
     <div class="logo-splash">
-        <img src="image-generation_oMCapdmWBbZ1DIg8MDXz5peCkTf2_1749673400478_result.jpeg" alt="Panda Holding Battery">
+        <img src="c:\Users\ADMIN\Downloads\image-generation_oMCapdmWBbZ1DIg8MDXz5peCkTf2_1749673400478_result.jpeg" alt="Panda Holding Battery">
         <h2>Solar Charging System</h2>
     </div>
 
@@ -665,38 +666,40 @@
         </div>
         
     <div class="popup-content">
+        <!-- Energy chart section -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="color: var(--primary); margin: 0;">Energy Generated Today</h3>
             <span id="today-date" style="font-weight: 500; color: #607D8B;"></span>
         </div>
 
-        <div class="graph-wrapper">
+        <div class="graph-wrapper" style="margin-bottom: 5px;">
             <canvas id="energyChart" height="100"></canvas>
         </div>
-        </div>
 
-            
-            <div class="status-card">
+        <!-- ✅ Move this inside -->
+        <div class="status-card">
             <h3 style="color: var(--primary); margin-bottom: 15px;">System Efficiency</h3>
 
             <!-- Panel Efficiency -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Panel Efficiency:</span>
-                <strong id="panel-efficiency-text">--%</strong>
+            <span>Panel Efficiency:</span>
+            <strong id="panel-efficiency-text">--%</strong>
             </div>
             <div style="height: 10px; background: #eee; border-radius: 5px; margin-bottom: 15px;">
-                <div id="panel-efficiency-bar" style="width: 0%; height: 100%; background: var(--primary); border-radius: 5px;"></div>
+            <div id="panel-efficiency-bar" style="width: 0%; height: 100%; background: var(--primary); border-radius: 5px;"></div>
             </div>
 
             <!-- Battery Efficiency -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Battery Efficiency:</span>
-                <strong id="battery-efficiency-text">--%</strong>
+            <span>Battery Efficiency:</span>
+            <strong id="battery-efficiency-text">--%</strong>
             </div>
             <div style="height: 10px; background: #eee; border-radius: 5px;">
-                <div id="battery-efficiency-bar" style="width: 0%; height: 100%; background: var(--secondary); border-radius: 5px;"></div>
+            <div id="battery-efficiency-bar" style="width: 0%; height: 100%; background: var(--secondary); border-radius: 5px;"></div>
             </div>
-            </div>
+        </div>
+        </div>
+
 
 
             <nav class="nav-bar" style="margin-top: auto;">
