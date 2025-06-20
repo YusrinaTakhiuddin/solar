@@ -445,12 +445,12 @@
             padding: 10px 0;
         }
 
-            #energyChart {
-            width: 100% !important;
-            height: auto !important;
-            min-height: 300px;
-            min-width: 600px;       /* allows enough space for bars */
+        #energyChart {
+            width: 100%;
+            height: 300px; /* fixed height for mobile */
+            max-width: 100%;
         }
+
 
 
         /* Table Styles */
@@ -962,53 +962,65 @@
                     const timestamp = child.key; // e.g. "2025-06-13_14-10-00"
                     const timeLabel = timestamp.split("_")[1].replace(/-/g, ":"); // → "14:10:00"
                     labels.push(timeLabel.slice(0, 5)); // → "14:10"
-
                     energyData.push(parseFloat(energyWh.toFixed(2)));
                 });
+
+                // Save data globally
+                window.energyChartLabels = labels;
+                window.energyChartData = energyData;
 
                 // ✅ Call the chart after data is prepared
                 renderEnergyChart(labels, energyData);
             });
 
-            // ✅ Chart function can be defined outside (optional)
-            function renderEnergyChart(labels, data) {
-                new Chart(document.getElementById("energyChart"), {
-                    type: 'bar', // ✅ Use bar instead of line
+            let energyChart = null; // global chart instance
+
+            function renderEnergyChart(labels = [], data = []) {
+                const ctx = document.getElementById("energyChart").getContext("2d");
+
+                // Destroy old chart if exists
+                if (energyChart) {
+                    energyChart.destroy();
+                }
+
+                // Create new chart
+                energyChart = new Chart(ctx, {
+                    type: 'bar',
                     data: {
-                    labels: labels,
-                    datasets: [{
-                        label: "Energy Generated (Wh)",
-                        data: data,
-                        backgroundColor: "#4CAF50", // ✅ Bar color
-                        borderRadius: 6 // Rounded top
-                    }]
+                        labels: labels,
+                        datasets: [{
+                            label: "Energy Generated (Wh)",
+                            data: data,
+                            backgroundColor: "#4CAF50",
+                            borderRadius: 6
+                        }]
                     },
                     options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: { display: true, text: "Time" },
-                            ticks: {
-                            maxRotation: 45,
-                            minRotation: 30,
-                            maxTicksLimit: 6,
-                            autoSkip: true
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: { display: true, text: "Time" },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 30,
+                                    maxTicksLimit: 6,
+                                    autoSkip: true
+                                }
+                            },
+                            y: {
+                                title: { display: true, text: "Energy (Wh)" },
+                                beginAtZero: true
                             }
                         },
-                        y: {
-                            title: { display: true, text: "Energy (Wh)" },
-                            beginAtZero: true
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: true }
                         }
-                    },
-
-                    plugins: {
-                        legend: { display: false }, // Bar chart usually doesn’t need legend
-                        tooltip: { enabled: true }
-                    }
                     }
                 });
-                }
+            }
+
             // Set today's date in header
             const todayDateEl = document.getElementById("today-date");
             const today = new Date();
@@ -1038,6 +1050,15 @@
                     if(popupId !== 'battery') {
                         document.getElementById(`${popupId}-popup`).classList.add('active');
                         document.body.style.overflow = 'hidden';
+
+                        // Add this block to fix mobile graph rendering
+                        if (popupId === 'stats') {
+                            setTimeout(() => {
+                                if (window.energyChartLabels && window.energyChartData) {
+                                    renderEnergyChart(window.energyChartLabels, window.energyChartData);
+                                }
+                            }, 300); // Give the popup time to render
+                        }
 
                         if (popupId === 'about') {
                             loadSystemPerformance(); 
