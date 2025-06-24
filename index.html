@@ -786,9 +786,17 @@
                     <i class="fas fa-leaf" style="margin-right: 6px; color: #4CAF50;"></i>
                     CO₂ Emissions Saved: <span id="co2-saved">--</span>
                 </p>
-
-
             </div>
+
+            <div id="environment-section" style="padding: 15px;">
+                <h3 style="color: var(--primary);">🌱 Environmental Value</h3>
+                <p><strong>CO₂ Saved:</strong> 64 kg/year</p>
+                <p><strong>Estimated Offset Value:</strong> RM 30–60/year</p>
+                <small style="color: #607D8B;"></small>
+                    These values are estimated based on using solar power instead of grid electricity. This promotes carbon reduction and sustainability.
+                </small>
+            </div>
+
         </div>
          <nav class="nav-bar" style="margin-top: auto;">
             <div class="nav-item active" data-popup="solar">
@@ -1053,7 +1061,7 @@
 
             // Set today's date in header
             const todayDateEl = document.getElementById("today-date");
-            const todayObj = new Date();  // use a new Date object
+            const todayObj = new Date();  // ✅ use a new Date object
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             todayDateEl.textContent = todayObj.toLocaleDateString('en-GB', options);
 
