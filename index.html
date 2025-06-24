@@ -694,12 +694,12 @@
             <canvas id="energyChart" height="100"></canvas>
         </div>
 
-        <!-- Add weekly chart here -->
+        <!-- Weekly Energy Chart -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top: 20px;">
             <h3 style="color: var(--primary); margin: 0;">Energy Generated This Week</h3>
         </div>
-        <div class="graph-wrapper" style="margin-bottom: 20px; overflow-x: auto;">
-            <canvas id="weeklyEnergyChart" height="100" style="min-width: 600px;"></canvas>
+        <div class="graph-wrapper" style="margin-bottom: 20px;">
+            <canvas id="weeklyEnergyChart" height="100"></canvas>
         </div>
 
     </div>
@@ -1085,72 +1085,84 @@
                 });
             });
 
-            <!-- Weekly Energy Chart Script -->
+            // Weekly Energy Chart Script
             const weeklyChartCtx = document.getElementById("weeklyEnergyChart").getContext("2d");
 
-            const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-            const dailyEnergy = {
-            "Monday": 0,
-            "Tuesday": 0,
-            "Wednesday": 0,
-            "Thursday": 0,
-            "Friday": 0,
-            "Saturday": 0,
-            "Sunday": 0
-            };
+            // Initialize with zeros for all days
+            const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            const dailyEnergy = [0, 0, 0, 0, 0, 0, 0];
 
-            database.ref("data1").once("value", (snapshot) => {
-            snapshot.forEach((child) => {
-                const key = child.key;
-                const power = parseFloat(child.val().power || 0);
-                const powerW = power / 1000;
-                const energy = powerW * (1 / 6);
+            // Get the current date to determine the week
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Start from Monday
 
-                const datePart = key.split("_")[0];
-                const dateObj = new Date(datePart);
-                const dayIndex = dateObj.getDay(); // 0 (Sun) to 6 (Sat)
-                const dayName = dayLabels[(dayIndex + 6) % 7]; // Start on Monday
+            // Format dates as YYYY-MM-DD for comparison
+            function formatDate(date) {
+                return date.toISOString().split('T')[0];
+            }
 
-                dailyEnergy[dayName] += energy;
-            });
-
-            const values = dayLabels.map(day => dailyEnergy[day].toFixed(2));
-
-            new Chart(weeklyChartCtx, {
-                type: "bar",
-                data: {
-                labels: dayLabels,
-                datasets: [{
-                    label: "Energy (Wh)",
-                    data: values,
-                    backgroundColor: "rgba(75, 192, 192, 0.6)",
-                    borderColor: "rgba(75, 192, 192, 1)",
-                    borderWidth: 1
-                }]
-                },
-                options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: false
+            // Query the last 7 days of data
+            database.ref("data1").orderByKey().startAt(formatDate(startOfWeek)).on("value", (snapshot) => {
+                const dailyTotals = [0, 0, 0, 0, 0, 0, 0];
+                const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+                
+                snapshot.forEach((child) => {
+                    const key = child.key;
+                    const datePart = key.split("_")[0];
+                    const dateObj = new Date(datePart);
+                    const dayIndex = (dateObj.getDay() + 6) % 7; // Convert to 0-6 (Mon-Sun)
+                    
+                    const power = parseFloat(child.val().power || 0);
+                    const energy = power * (10 / 60); // 10 minute intervals -> hours
+                    
+                    dailyTotals[dayIndex] += energy;
+                    dayCounts[dayIndex]++;
+                });
+                
+                // Calculate averages if needed, or just use totals
+                for (let i = 0; i < 7; i++) {
+                    dailyEnergy[i] = dayCounts[i] > 0 ? dailyTotals[i] : 0;
+                }
+                
+                // Create the chart
+                new Chart(weeklyChartCtx, {
+                    type: "bar",
+                    data: {
+                        labels: dayLabels,
+                        datasets: [{
+                            label: "Energy (Wh)",
+                            data: dailyEnergy,
+                            backgroundColor: "rgba(76, 175, 80, 0.7)",
+                            borderColor: "rgba(76, 175, 80, 1)",
+                            borderWidth: 1
+                        }]
                     },
-                    legend: {
-                    display: false
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw.toFixed(2)} Wh`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: "Energy (Wh)"
+                                }
+                            }
+                        }
                     }
-                },
-                scales: {
-                    y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: "Energy (Wh)"
-                    }
-                    }
-                }
-                }
+                });
             });
-            });
-
             
             closeButtons.forEach(button => {
                 button.addEventListener('click', function() {
