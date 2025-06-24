@@ -586,9 +586,9 @@
         </section>
         
         <nav class="nav-bar">
-            <div class="nav-item active" data-popup="battery">
-                <i class="fas fa-battery-quarter"></i>
-                <span>Battery</span>
+            <div class="nav-item active" data-popup="solar">
+                <i class="fas fa-solar-panel"></i> 
+                <span>Solar</span>
             </div>
             <div class="nav-item" data-popup="load">
                 <i class="fas fa-plug"></i>
@@ -658,9 +658,9 @@
         </div>
         
         <nav class="nav-bar" style="margin-top: auto;">
-            <div class="nav-item" data-popup="battery">
-                <i class="fas fa-battery-quarter"></i>
-                <span>Battery</span>
+            <div class="nav-item active" data-popup="solar">
+                <i class="fas fa-solar-panel"></i> 
+                <span>Solar</span>
             </div>
             <div class="nav-item active" data-popup="load">
                 <i class="fas fa-plug"></i>
@@ -693,13 +693,23 @@
         <div class="graph-wrapper" style="margin-bottom: 20px;">
             <canvas id="energyChart" height="100"></canvas>
         </div>
+
+        <!-- Add weekly chart here -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top: 20px;">
+            <h3 style="color: var(--primary); margin: 0;">Energy Generated This Week</h3>
+        </div>
+        <div class="graph-wrapper" style="margin-bottom: 20px;">
+            <canvas id="weeklyEnergyChart" height="100"></canvas>
+        </div>
+
     </div>
 
+
     <nav class="nav-bar" style="margin-top: auto;">
-        <div class="nav-item" data-popup="battery">
-            <i class="fas fa-battery-quarter"></i>
-            <span>Battery</span>
-        </div>
+        <div class="nav-item active" data-popup="solar">
+                <i class="fas fa-solar-panel"></i> 
+                <span>Solar</span>
+            </div>
         <div class="nav-item" data-popup="load">
             <i class="fas fa-plug"></i>
             <span>Load</span>
@@ -768,9 +778,9 @@
             </div>
         </div>
          <nav class="nav-bar" style="margin-top: auto;">
-            <div class="nav-item" data-popup="battery">
-                <i class="fas fa-battery-quarter"></i>
-                <span>Battery</span>
+            <div class="nav-item active" data-popup="solar">
+                <i class="fas fa-solar-panel"></i> 
+                <span>Solar</span>
             </div>
             <div class="nav-item" data-popup="load">
                 <i class="fas fa-plug"></i>
@@ -875,7 +885,6 @@
                     calculateAvailablePower();
                     calculateBatteryBackup();
 
-                    // Estimate battery percentage based on energy balance
                     if (batteryPower !== null && loadPower !== null) {
                         const netPower = batteryPower - loadPower; // W
                         const deltaTimeHours = 10 / 60; // 10 minutes = 1/6 hour
@@ -884,9 +893,13 @@
                         batteryEnergy += netPower * deltaTimeHours;
                         batteryEnergy = Math.max(0, Math.min(batteryEnergy, batteryCapacityWh)); // Clamp between 0 and full
 
+                        // Define estimatedPercentage BEFORE using it
+                        const estimatedPercentage = (batteryEnergy / batteryCapacityWh) * 100;
+
                         // Store to localStorage for persistence
                         localStorage.setItem("batteryEnergyWh", batteryEnergy.toFixed(2));
 
+                        // Now it's safe to use estimatedPercentage here
                         database.ref("batteryEstimate").set({
                             energy: batteryEnergy.toFixed(2),
                             percentage: estimatedPercentage.toFixed(1),
@@ -894,9 +907,9 @@
                         });
 
                         // Update battery percentage display
-                        const estimatedPercentage = (batteryEnergy / batteryCapacityWh) * 100;
                         updateBattery(estimatedPercentage);
                     }
+
                     });
                 });
 
@@ -952,24 +965,28 @@
             }
 
 
-            database.ref("data1").limitToLast(144).on("value", (snapshot) => {
+            const todayStr = new Date().toISOString().slice(0, 10); // "2025-06-24"
+            database.ref("data1").on("value", (snapshot) => {
+
                 const labels = [];
                 const energyData = [];
 
                 snapshot.forEach((child) => {
-                    const entry = child.val();
-                    const energyWh = entry.power * 0.1667;
-                    const timestamp = child.key; // e.g. "2025-06-13_14-10-00"
-                    const timeLabel = timestamp.split("_")[1].replace(/-/g, ":"); // → "14:10:00"
-                    labels.push(timeLabel.slice(0, 5)); // → "14:10"
-                    energyData.push(parseFloat(energyWh.toFixed(2)));
-                });
+                    const key = child.key; // e.g. "2025-06-24_14-10-00"
+                    if (!key.startsWith(todayStr)) return; // skip if not today
+
+                    const timeLabel = key.split("_")[1].slice(0, 5); // "14-10" -> "14:10"
+                    const power = parseFloat(child.val().power || 0);
+
+                    labels.push(timeLabel.replace("-", ":"));
+                    energyData.push((power * 0.1667).toFixed(2));
+                    });
 
                 // Save data globally
                 window.energyChartLabels = labels;
                 window.energyChartData = energyData;
 
-                // ✅ Call the chart after data is prepared
+                // Call the chart after data is prepared
                 renderEnergyChart(labels, energyData);
             });
 
@@ -1023,10 +1040,10 @@
 
             // Set today's date in header
             const todayDateEl = document.getElementById("today-date");
-            const today = new Date();
+            const todayObj = new Date();  // ✅ use a new Date object
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            todayDateEl.textContent = today.toLocaleDateString('en-GB', options);
-            // Example: "13 June 2025"
+            todayDateEl.textContent = todayObj.toLocaleDateString('en-GB', options);
+
 
             // Popup functionality
             const navItems = document.querySelectorAll('.nav-item');
@@ -1068,6 +1085,71 @@
                     }
                 });
             });
+
+            <!-- Weekly Energy Chart Script -->
+            const weeklyChartCtx = document.getElementById("weeklyEnergyChart").getContext("2d");
+
+            const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+            const dailyEnergy = {
+            "Monday": 0,
+            "Tuesday": 0,
+            "Wednesday": 0,
+            "Thursday": 0,
+            "Friday": 0,
+            "Saturday": 0,
+            "Sunday": 0
+            };
+
+            database.ref("data1").once("value", (snapshot) => {
+            snapshot.forEach((child) => {
+                const key = child.key;
+                const power = parseFloat(child.val().power || 0);
+                const powerW = power / 1000;
+                const energy = powerW * (1 / 6);
+
+                const datePart = key.split("_")[0];
+                const dateObj = new Date(datePart);
+                const dayIndex = dateObj.getDay(); // 0 (Sun) to 6 (Sat)
+                const dayName = dayLabels[(dayIndex + 6) % 7]; // Start on Monday
+
+                dailyEnergy[dayName] += energy;
+            });
+
+            const values = dayLabels.map(day => dailyEnergy[day].toFixed(2));
+
+            new Chart(weeklyChartCtx, {
+                type: "bar",
+                data: {
+                labels: dayLabels,
+                datasets: [{
+                    label: "Energy (Wh)",
+                    data: values,
+                    backgroundColor: "rgba(75, 192, 192, 0.6)",
+                    borderColor: "rgba(75, 192, 192, 1)",
+                    borderWidth: 1
+                }]
+                },
+                options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                    display: true,
+                    text: "Energy Generated This Week"
+                    }
+                },
+                scales: {
+                    y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Energy (Wh)"
+                    }
+                    }
+                }
+                }
+            });
+            });
+
             
             closeButtons.forEach(button => {
                 button.addEventListener('click', function() {
