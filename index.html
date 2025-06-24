@@ -1053,7 +1053,7 @@
 
             // Set today's date in header
             const todayDateEl = document.getElementById("today-date");
-            const todayObj = new Date();  // ✅ use a new Date object
+            const todayObj = new Date();  // use a new Date object
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             todayDateEl.textContent = todayObj.toLocaleDateString('en-GB', options);
 
@@ -1106,102 +1106,126 @@
             const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
             const dailyEnergy = [0, 0, 0, 0, 0, 0, 0];
 
-            // Get the current date to determine the week
-            const today = new Date();
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Start from Monday
-
-            // Format dates as YYYY-MM-DD for comparison
-            function formatDate(date) {
-                return date.toISOString().split('T')[0];
-            }
-
-            // Query the last 7 days of data
-            database.ref("data1").orderByKey().startAt(formatDate(startOfWeek)).on("value", (snapshot) => {
-                const dailyTotals = [0, 0, 0, 0, 0, 0, 0];
+            // Get data for the current week
+            function getWeekData() {
+                const today = new Date();
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1)); // Always start from Monday
                 
-                snapshot.forEach((child) => {
-                    const key = child.key;
-                    const datePart = key.split("_")[0];
-                    const dateObj = new Date(datePart);
-                    const dayIndex = (dateObj.getDay() + 6) % 7; // Convert to 0-6 (Mon-Sun)
-                    
-                    const power = parseFloat(child.val().power || 0);
-                    const energy = power * (10 / 60); // 10 minute intervals -> hours
-                    
-                    dailyTotals[dayIndex] += energy;
-                });
-                
-                // Update the daily energy array
+                // Reset daily energy
                 for (let i = 0; i < 7; i++) {
-                    dailyEnergy[i] = dailyTotals[i];
+                    dailyEnergy[i] = 0;
                 }
                 
-                // Create the chart with compact options
-                new Chart(weeklyChartCtx, {
+                // Calculate date range for the week
+                const dateRange = [];
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(startOfWeek);
+                    date.setDate(startOfWeek.getDate() + i);
+                    dateRange.push(formatDate(date));
+                }
+                
+                // Fetch data for each day of the week
+                database.ref("data1").orderByKey().once("value", (snapshot) => {
+                    snapshot.forEach((child) => {
+                        const key = child.key;
+                        const datePart = key.split("_")[0];
+                        
+                        // Check if this date is in our current week
+                        if (dateRange.includes(datePart)) {
+                            const dateObj = new Date(datePart);
+                            const dayIndex = (dateObj.getDay() + 6) % 7; // Convert to 0-6 (Mon-Sun)
+                            
+                            const power = parseFloat(child.val().power || 0);
+                            // Calculate energy in Wh (power in W * time in hours)
+                            // Assuming 10-minute intervals: 10/60 = 0.1667 hours
+                            const energy = power * (10 / 60); 
+                            
+                            dailyEnergy[dayIndex] += energy;
+                        }
+                    });
+                    
+                    // Now create/update the chart with the collected data
+                    updateWeeklyChart();
+                });
+            }
+
+            function formatDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            function updateWeeklyChart() {
+                // Destroy previous chart if it exists
+                if (window.weeklyChart) {
+                    window.weeklyChart.destroy();
+                }
+                
+                // Create new chart
+                window.weeklyChart = new Chart(weeklyChartCtx, {
                     type: "bar",
                     data: {
                         labels: dayLabels,
                         datasets: [{
                             label: "Energy (Wh)",
                             data: dailyEnergy,
-                            backgroundColor: "rgba(76, 175, 80, 0.7)",
-                            borderColor: "rgba(76, 175, 80, 1)",
+                            backgroundColor: [
+                                "rgba(76, 175, 80, 0.7)",
+                                "rgba(76, 175, 80, 0.7)",
+                                "rgba(76, 175, 80, 0.7)",
+                                "rgba(76, 175, 80, 0.7)",
+                                "rgba(76, 175, 80, 0.7)",
+                                "rgba(76, 175, 80, 0.7)",
+                                "rgba(76, 175, 80, 0.7)"
+                            ],
+                            borderColor: [
+                                "rgba(76, 175, 80, 1)",
+                                "rgba(76, 175, 80, 1)",
+                                "rgba(76, 175, 80, 1)",
+                                "rgba(76, 175, 80, 1)",
+                                "rgba(76, 175, 80, 1)",
+                                "rgba(76, 175, 80, 1)",
+                                "rgba(76, 175, 80, 1)"
+                            ],
                             borderWidth: 1,
-                            barThickness: 30, // Fixed bar thickness
-                            maxBarThickness: 35
+                            barThickness: 30
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        layout: {
-                            padding: {
-                                top: 10,
-                                bottom: 10
-                            }
-                        },
                         plugins: {
                             legend: { display: false },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return `${context.raw.toFixed(2)} Wh`;
+                                        return `${context.parsed.y.toFixed(2)} Wh`;
                                     }
                                 }
                             }
                         },
                         scales: {
                             x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    maxRotation: 0,
-                                    padding: 5
-                                }
+                                grid: { display: false }
                             },
                             y: {
                                 beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: "Energy (Wh)",
-                                    padding: {top: 5, bottom: 5}
-                                },
+                                title: { display: true, text: "Energy (Wh)" },
                                 ticks: {
-                                    padding: 5,
                                     callback: function(value) {
-                                        return value % 20 === 0 ? value : '';
+                                        return value;
                                     }
-                                },
-                                grid: {
-                                    drawTicks: false
                                 }
                             }
                         }
                     }
                 });
-            });
+            }
+
+            // Initial load
+            getWeekData();
 
             
             closeButtons.forEach(button => {
