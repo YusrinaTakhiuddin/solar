@@ -565,12 +565,13 @@
         </header>
         
         <section class="battery-status">
-            <h2>Battery Status</h2>
+            <h2>Estimate Battery Status</h2>
             <div class="battery-icon">
                 <div class="battery-level" id="battery-level"></div>
             </div>
             <div class="battery-percentage" id="battery-percentage">0</div>
-            
+            <div id="battery-status-label" class="status-value" style="text-align:center; font-size:16px; margin-top:5px;">Status</div>
+
             <div class="battery-details">
                 <div class="detail-card">
                     <h3>Voltage</h3>
@@ -792,7 +793,7 @@
                 <h3 style="color: var(--primary);">🌱 Environmental Value</h3>
                 <p><strong>CO₂ Saved:</strong> 64 kg/year</p>
                 <p><strong>Estimated Offset Value:</strong> RM 30–60/year</p>
-                <small style="color: #607D8B;"></small>
+                <small style="color: #607D8B;">
                     These values are estimated based on using solar power instead of grid electricity. This promotes carbon reduction and sustainability.
                 </small>
             </div>
@@ -820,20 +821,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let batteryEnergy = localStorage.getItem("batteryEnergyWh");
-            batteryEnergy = batteryEnergy ? parseFloat(batteryEnergy) : 54; // Assume 50% (54Wh) at start
-
-            const batteryCapacityWh = 108; // 12V x 9Ah = 108Wh
-
-            database.ref("batteryEstimate").once("value", (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    if (data.energy) {
-                        batteryEnergy = parseFloat(data.energy);
-                        localStorage.setItem("batteryEnergyWh", batteryEnergy.toFixed(2));
-                    }
-                }
-            });
 
             // Hide splash screen after 2 seconds
             setTimeout(() => {
@@ -851,7 +838,7 @@
             updateBattery(0);
             
             // ✅ Declare global variables first
-            let batteryPower = null;
+            let solarPower = null;
             let loadPower = null;
 
             // Update other data (in a real app, this would come from an API)
@@ -883,7 +870,7 @@
                         }
 
                         
-                        batteryPower = data.power;
+                        solarPower = data.power;
                         calculateAvailablePower();
                     });
                 });
@@ -904,38 +891,44 @@
                     else if (data.loadLevel === "High") loadLevelEl.style.color = "#F44336"; // red
                     loadPower = data.power;
                     calculateAvailablePower();
-                    calculateBatteryBackup();
+                    calculateBatteryBackup();  
+                    });
+                });
+            
+            // Update battery percentage and bar from data3
+                database.ref("data3").limitToLast(1).on("value", (snapshot) => {
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
 
-                    if (batteryPower !== null && loadPower !== null) {
-                        const netPower = batteryPower - loadPower; // W
-                        const deltaTimeHours = 10 / 60; // 10 minutes = 1/6 hour
+                        let percent = parseFloat(data.batteryPercent);
+                        if (isNaN(percent)) percent = 0;
 
-                        // Update estimated battery energy
-                        batteryEnergy += netPower * deltaTimeHours;
-                        batteryEnergy = Math.max(0, Math.min(batteryEnergy, batteryCapacityWh)); // Clamp between 0 and full
+                        updateBattery(percent);
 
-                        // Define estimatedPercentage BEFORE using it
-                        const estimatedPercentage = (batteryEnergy / batteryCapacityWh) * 100;
+                        // Display status label
+                        const statusLabelEl = document.getElementById("battery-status-label");
 
-                        // Store to localStorage for persistence
-                        localStorage.setItem("batteryEnergyWh", batteryEnergy.toFixed(2));
+                        // Ensure percent is valid
+                        if (!isNaN(percent) && percent > 0 && data.batteryStatus) {
+                            statusLabelEl.textContent = data.batteryStatus;
 
-                        // Now it's safe to use estimatedPercentage here
-                        database.ref("batteryEstimate").set({
-                            energy: batteryEnergy.toFixed(2),
-                            percentage: estimatedPercentage.toFixed(1),
-                            lastUpdated: new Date().toISOString()
-                        });
+                            statusLabelEl.style.color = (
+                                data.batteryStatus === "Full" ? "#4CAF50" :
+                                data.batteryStatus === "Normal" ? "#2196F3" :
+                                data.batteryStatus === "Low" ? "#FF9800" :
+                                "#F44336" // Critical
+                            );
 
-                        // Update battery percentage display
-                        updateBattery(estimatedPercentage);
-                    }
+                            statusLabelEl.style.display = "block"; // ensure visible
+                        } else {
+                            statusLabelEl.textContent = "";        // hide text
+                            statusLabelEl.style.display = "none";  // fully hide the element
+                        }
 
                     });
                 });
 
-            //}, 1500);
-            
+
             function updateBattery(percent) {
             batteryLevel.style.width = percent + '%';
             batteryPercentage.textContent = Math.round(percent);
@@ -950,8 +943,8 @@
         }
             
             function calculateAvailablePower() {
-                if (batteryPower !== null && loadPower !== null) {
-                    const available = batteryPower - loadPower;
+                if (solarPower !== null && loadPower !== null) {
+                    const available = solarPower - loadPower;
                     document.getElementById("available-power").textContent = `${available.toFixed(1)} W`;
                 }
             }
@@ -984,7 +977,6 @@
                     document.getElementById("co2-saved").textContent = `${co2Saved} kg`;
                 });
             }
-
 
             const todayStr = new Date().toISOString().slice(0, 10); // "2025-06-24"
             database.ref("data1").on("value", (snapshot) => {
