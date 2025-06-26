@@ -855,7 +855,7 @@
                         const chargingStatus = document.getElementById("charging-status");
                         const solarSpinner = document.getElementById("solar-spinner");
 
-                        const solarPower = parseFloat(data.power) || 0;
+                        solarPower = parseFloat(data.power) || 0;
                         const isCharging = solarPower > 0.5; // threshold to detect charging (adjust as needed)
 
                         chargingStatus.textContent = isCharging ? "Charging" : "Not Charging";
