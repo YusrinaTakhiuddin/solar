@@ -144,7 +144,7 @@
         }
         
         .battery-percentage::after {
-            content: "%";
+            
             font-size: 24px;
             position: absolute;
             top: 10px;
@@ -566,9 +566,7 @@
         
         <section class="battery-status">
             <h2>Estimate Battery Status</h2>
-            <div class="battery-icon">
-                <div class="battery-level" id="battery-level"></div>
-            </div>
+            
             <div class="battery-percentage" id="battery-percentage">0</div>
             <div id="battery-status-label" class="status-value" style="text-align:center; font-size:16px; margin-top:5px;">Status</div>
 
@@ -900,7 +898,7 @@
                     snapshot.forEach((childSnapshot) => {
                         const data = childSnapshot.val();
 
-                        let percent = parseFloat(data.batteryPercent);
+                        let percent = parseFloat(data.batteryPercentage);
                         if (isNaN(percent)) percent = 0;
 
                         updateBattery(percent);
@@ -930,18 +928,10 @@
 
 
             function updateBattery(percent) {
-            batteryLevel.style.width = percent + '%';
-            batteryPercentage.textContent = Math.round(percent);
-
-            if (percent < 20) {
-                batteryLevel.style.background = '#F44336';
-            } else if (percent < 50) {
-                batteryLevel.style.background = '#FF9800';
-            } else {
-                batteryLevel.style.background = '#4CAF50';
+                batteryPercentage.textContent = Math.round(percent) + "%";
             }
-        }
-            
+
+                        
             function calculateAvailablePower() {
                 if (solarPower !== null && loadPower !== null) {
                     const available = solarPower - loadPower;
