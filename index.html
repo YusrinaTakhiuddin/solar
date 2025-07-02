@@ -782,18 +782,18 @@
                 <p style="font-size: 14px; color: #607D8B;">
                     <i class="fas fa-bolt" style="margin-right: 6px; color: #FF9800;"></i>
                     Total Energy Generated: <span id="total-energy">--</span><br>
-                    <i class="fas fa-leaf" style="margin-right: 6px; color: #4CAF50;"></i>
-                    CO₂ Emissions Saved: <span id="co2-saved">--</span>
-                </p>
-            </div>
 
-            <div id="environment-section" style="padding: 15px;">
-                <h3 style="color: var(--primary);">🌱 Environmental Value</h3>
-                <p><strong>CO₂ Saved:</strong> 64 kg/year</p>
-                <p><strong>Estimated Offset Value:</strong> RM 30–60/year</p>
-                <small style="color: #607D8B;">
-                    These values are estimated based on using solar power instead of grid electricity. This promotes carbon reduction and sustainability.
-                </small>
+                    <i class="fas fa-leaf" style="margin-right: 6px; color: #4CAF50;"></i>
+                    CO₂ Saved: <span id="co2-saved">--</span><br>
+
+                    <i class="fas fa-coins" style="margin-right: 6px; color: #f2c533;"></i>
+                    Monetary Impact: RM <span id="co2-value">--</span><br>
+
+                    <small style="color: #131415;">
+                        Estimated based on RM 0.07/kg CO₂ using solar energy instead of grid electricity.
+                    </small>
+                </p>
+
             </div>
 
         </div>
@@ -951,7 +951,6 @@
                 }
             }
 
-
             function loadSystemPerformance() {
                 let totalEnergy = 0;
                 database.ref("data1").once("value", (snapshot) => {
@@ -965,6 +964,10 @@
 
                     const co2Saved = (kWh * 0.7).toFixed(2); // 0.7 kg CO2 per kWh (Malaysia average)
                     document.getElementById("co2-saved").textContent = `${co2Saved} kg`;
+                
+                    const carbonPricePerKg = 0.07;
+                    const co2Value = (co2Saved * carbonPricePerKg).toFixed(4);
+                    document.getElementById("co2-value").textContent = co2Value;
                 });
             }
 
