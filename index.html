@@ -962,7 +962,7 @@
                     const kWh = (totalEnergy / 1000).toFixed(2);
                     document.getElementById("total-energy").textContent = `${kWh} kWh`;
 
-                    const co2Saved = (kWh * 0.7).toFixed(2); // 0.7 kg CO2 per kWh (Malaysia average)
+                    const co2Saved = (kWh * 0.758).toFixed(2); // 0.758 kg CO2 per kWh (Malaysia average)
                     document.getElementById("co2-saved").textContent = `${co2Saved} kg`;
                 
                     const carbonPricePerKg = 0.07;
