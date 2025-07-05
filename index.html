@@ -621,7 +621,7 @@
     <!-- Full-screen Popups -->
     <div class="popup-overlay" id="load-popup">
         <div class="popup-header">
-            <h2 class="popup-title">Load Management</h2>
+            <h2 class="popup-title">Load Monitoring</h2>
             <button class="popup-close">&times;</button>
         </div>
         
@@ -659,7 +659,7 @@
             
             <div style="margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 12px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Available Power:</span>
+                <span>Instantaneous Net Power:</span>
                 <strong id="available-power">-- W</strong>
             </div>
                 <div style="display: flex; justify-content: space-between;">
@@ -962,7 +962,7 @@
                     const kWh = (totalEnergy / 1000).toFixed(2);
                     document.getElementById("total-energy").textContent = `${kWh} kWh`;
 
-                    const co2Saved = (kWh * 0.758).toFixed(2); // 0.758 kg CO2 per kWh (Malaysia average)
+                    const co2Saved = (kWh * 0.7).toFixed(2); // 0.7 kg CO2 per kWh (Malaysia average)
                     document.getElementById("co2-saved").textContent = `${co2Saved} kg`;
                 
                     const carbonPricePerKg = 0.07;
